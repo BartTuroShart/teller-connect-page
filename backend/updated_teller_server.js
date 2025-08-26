@@ -31,10 +31,9 @@ const { URL } = require('url');
 const fs = require('fs');
 const path = require('path');
 
-// Path to the JSON file used to persist sync results. The file is created
+const DATA_FILE = process.env.DATA_FILE || path.join(process.env.DATA_DIR || '/tmp', 'data.json');
 // in the same directory as this server script.
-const DATA_FILE = path.join(__dirname, 'data.json');
-// Basic auth credentials for the admin portal. You can override these
+
 // by setting ADMIN_USER and ADMIN_PASS environment variables in your
 // Render service settings.
 const ADMIN_USER = process.env.ADMIN_USER || 'admin';
@@ -190,6 +189,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (req.method === 'POST' && req.url === '/api/teller/sync') {
+      console.log('Received /api/teller/sync request');
     let body = '';
     req.on('data', (chunk) => {
       body += chunk;
@@ -197,7 +197,7 @@ const server = http.createServer(async (req, res) => {
     req.on('end', async () => {
       try {
         const payload = JSON.parse(body || '{}');
-        const accessToken = payload.access_token;
+const accessToken = payload.access_token || payload.accessToken;
         if (!accessToken) {
           throw new Error('Missing access_token');
         }
