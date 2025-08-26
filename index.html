@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Connect your bank</title>
-  <!-- Correct Teller Connect script path -->
+  <!-- Keep your current Teller Connect script path -->
   <script src="https://cdn.teller.io/connect/connect.js"></script>
   <style>
     body {
@@ -13,9 +13,11 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      height: 100vh;
+      justify-content: flex-start;
+      min-height: 100vh;
       margin: 0;
+      padding: 32px 16px;
+      box-sizing: border-box;
     }
     #connect-button {
       padding: 12px 24px;
@@ -26,42 +28,66 @@
       border-radius: 4px;
       cursor: pointer;
     }
+    /* NEW: make results readable */
+    #results {
+      border: 1px solid #ddd;
+      padding: 12px;
+      white-space: pre-wrap;
+      background: #fff;
+      width: 100%;
+      max-width: 920px;
+      margin-top: 16px;
+    }
   </style>
 </head>
 <body>
   <h1>Connect your bank account</h1>
   <p>Click the button below to securely connect your bank account to our application.</p>
+
   <button id="connect-button">Connect to your bank</button>
+
+  <!-- NEW: where we render the backend JSON response -->
+  <pre id="results"></pre>
+
   <script>
+    // Keep your existing Render backend base URL here
+    const API_BASE = "https://teller-connect-page.onrender.com";
+
     document.addEventListener("DOMContentLoaded", function() {
       var tellerConnect = TellerConnect.setup({
         applicationId: "app_pgpn2smst823jvst44000", // Use your real application ID
         environment: "development", // change to "production" when ready
         products: ["verify", "balance", "transactions", "identity"],
+
         onSuccess: function(enrollment) {
-          // Send the access token to our backend hosted on Render
-          fetch("https://teller-connect-page.onrender.com/api/teller/sync", {
+          // Send the access token to your backend hosted on Render
+          fetch(API_BASE + "/api/teller/sync", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ access_token: enrollment.accessToken })
           })
             .then(function(res) { return res.json(); })
             .then(function(data) {
+              // NEW: show the JSON right on the page
+              var pre = document.getElementById("results");
+              pre.textContent = JSON.stringify(data, null, 2);
               console.log("Recent transactions:", data);
-              alert("Bank data retrieved. See console for details.");
             })
             .catch(function(error) {
               console.error("Error fetching transactions:", error);
               alert("An error occurred fetching transactions.");
             });
         },
+
         onExit: function() {
           alert("You have closed the connection flow.");
         },
+
         onInit: function() {
           console.log("Teller Connect has initialized");
         }
       });
+
       var button = document.getElementById("connect-button");
       button.addEventListener("click", function() {
         tellerConnect.open();
